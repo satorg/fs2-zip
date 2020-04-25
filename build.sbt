@@ -2,7 +2,7 @@ name := "fs2-zip"
 organization := "satorg"
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.2"
 scalacOptions ++= Seq(
   "-encoding", "utf-8",
   "-deprecation",
