@@ -1,16 +1,19 @@
 package satorg.fs2.zip
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
-import java.nio.charset.StandardCharsets
+import java.io.InputStream
 
 import cats.effect._
 import cats.implicits._
 import fs2._
+import org.scalacheck._
+import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
+import scodec.bits.ByteVector
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
-class ZipUnzipTest extends Specification {
+class ZipUnzipTest extends Specification with ScalaCheck {
 
   import ZipUnzipTest._
 
@@ -41,28 +44,54 @@ class ZipUnzipTest extends Specification {
         ))
     }
   }
-  "zipPipe and then unzipPipe" should {
-    "process empty archive" in {
-      val outputStream = new ByteArrayOutputStream
+  "zipPipe and unzipPipe" should {
+    "compress and decompress streams correctly" in {
+      implicit val arbInputEntries: Arbitrary[Map[String, ByteVector]] = Arbitrary {
+        Gen.mapOf {
+          val entryPathGen =
+            Gen.listOf(Gen.frequency(9 -> Gen.alphaNumChar, 1 -> Gen.const('/')))
+              .map(_.mkString)
 
-      Stream.empty.covaryAll[IO, ZipEntry[IO]]
-        .through(zipPipe(testBlocker))
-        .through(io.writeOutputStream(IO.pure[OutputStream](outputStream), testBlocker))
-        .compile
-        .drain
-        .unsafeRunSync()
+          val entryBodyGen =
+            Gen.resize(
+              1000,
+              Gen.containerOf[Array, Byte](Arbitrary.arbByte.arbitrary)
+                .map(ByteVector.view))
 
-      val zippedBytes = outputStream.toByteArray
+          Gen.zip(entryPathGen, entryBodyGen)
+        }
+      }
 
-      zippedBytes must haveLength(be_>(2))
-      val initSig = new String(zippedBytes.take(2), StandardCharsets.US_ASCII)
-      initSig ==== "PK"
+      prop { sourceBodiesByPath: Map[String, ByteVector] =>
+        val sourceEntries = sourceBodiesByPath.toVector
 
-      io.readInputStream(IO.pure[InputStream](new ByteArrayInputStream(zippedBytes)), 1, testBlocker)
-        .through(unzipPipe(testBlocker))
-        .compile
-        .toList
-        .unsafeRunSync() must beEmpty
+        Stream.emits(sourceEntries).covary[IO]
+          // prepare a stream of `ZipEntry`
+          .map { case (path, bytes) =>
+            ZipEntry(
+              path = path,
+              body = Stream.chunk(Chunk.byteVector(bytes)).covary[IO].rechunkRandomly())
+          }
+          // compress to byte stream
+          .through(zipPipe(testBlocker))
+          // convert to a single item chunk of bytes
+          .chunks
+          .fold(Chunk.Queue.empty[Byte])(_ :+ _)
+          .map(_.toChunk)
+          // create a new stream of bytes from the chunk
+          .flatMap(Stream.chunk)
+          .rechunkRandomly()
+          // decompress from byte stream
+          .through(unzipPipe(testBlocker))
+          // extract each entry into a separate `ByteVector`
+          .evalMap { unzippedEntry =>
+            unzippedEntry.body.compile.to(ByteVector).map { unzippedEntry.path -> _ }
+          }
+          // prepare and run the stream
+          .compile
+          .toVector
+          .unsafeRunTimed(5.seconds) must beSome(===(sourceEntries))
+      }
     }
   }
 }
