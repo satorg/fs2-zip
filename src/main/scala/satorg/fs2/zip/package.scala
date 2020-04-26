@@ -30,10 +30,9 @@ package object zip {
           val writeOutput = io.writeOutputStream[F](F.pure(output), blocker, closeAfterUse = false)
 
           entries
-            .flatMap { entry =>
-              val putNextEntry = F.delay { output.putNextEntry(entry.toJava) }
-
-              Stream.eval_(putNextEntry) ++ entry.body.through(writeOutput).drain
+            .evalMap { entry =>
+              blocker.delay { output.putNextEntry(entry.toJava) } >>
+                entry.body.through(writeOutput).compile.drain
             }
             .compile
             .drain
