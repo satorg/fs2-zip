@@ -3,6 +3,8 @@ organization := "satorg"
 version := "0.1-SNAPSHOT"
 
 scalaVersion := Versions.`Scala_2.13`
+crossScalaVersions := Seq(Versions.`Scala_2.12`, Versions.`Scala_2.13`)
+
 scalacOptions ++= Seq(
   "-encoding",
   "utf-8",
@@ -11,9 +13,21 @@ scalacOptions ++= Seq(
   "-unchecked",
   "-explaintypes",
   "-language:higherKinds",
-  "-Wdead-code",
-  "-Werror"
-)
+  "-Xlint"
+) ++
+  CrossVersion.partialVersion(scalaVersion.value).collect {
+    case (2, 12) =>
+      Seq(
+        "-Xfatal-warnings",
+        "-Ypartial-unification",
+        "-Ywarn-dead-code"
+      )
+    case (2, minor) if minor >= 13 =>
+      Seq(
+        "-Wdead-code",
+        "-Werror"
+      )
+  }.toList.flatten
 
 libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % Versions.fs2,

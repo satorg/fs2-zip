@@ -8,8 +8,6 @@ import cats.effect.concurrent.Deferred
 import cats.syntax.all._
 import fs2._
 
-import scala.util.chaining._
-
 package object zip {
 
   type ByteStream[F[_]] = Stream[F, Byte]
@@ -41,11 +39,11 @@ package object zip {
       implicit
       F: ConcurrentEffect[F],
       config: ZipConfig
-  ): UnzipPipe[F] = {
-
-    io.toInputStreamResource[F](_)
-      .flatMap { mkJZipInputStreamResource[F](blocker, config) }
-      .pipe { Stream.resourceWeak }
+  ): UnzipPipe[F] = { zipped =>
+    Stream
+      .resourceWeak(
+        io.toInputStreamResource[F](zipped).flatMap { mkJZipInputStreamResource[F](blocker, config) }
+      )
       .flatMap { input =>
         def emitNextEntry: ZipEntryStream[F] = Stream.force {
           blocker.delay { input.getNextEntry } >>= {
