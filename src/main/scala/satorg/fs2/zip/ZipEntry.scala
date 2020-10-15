@@ -9,8 +9,9 @@ final case class ZipEntry[F[_]](path: String, body: Stream[F, Byte]) {
 }
 
 object ZipEntry {
-  def fromJavaAndBody[F[_]](jEntry: JZip.ZipEntry, body: ByteStream[F]): ZipEntry[F] =
-    ZipEntry(
-      path = jEntry.getName,
-      body = body)
+  def fromJavaAndBody[F[_]](
+      jEntry: JZip.ZipEntry,
+      body: ByteStream[F]
+  ): ZipEntry[F] =
+    ZipEntry(path = jEntry.getName, body = body)
 }

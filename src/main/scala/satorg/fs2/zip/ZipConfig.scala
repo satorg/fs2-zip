@@ -8,5 +8,6 @@ object ZipConfig {
   implicit lazy val default: ZipConfig =
     ZipConfig(
       chunkSize = 8192,
-      charset = StandardCharsets.UTF_8)
+      charset = StandardCharsets.UTF_8
+    )
 }
