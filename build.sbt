@@ -2,7 +2,7 @@ name := "fs2-zip"
 organization := "satorg"
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.13.2"
+scalaVersion := Versions.`Scala_2.13`
 scalacOptions ++= Seq(
   "-encoding", "utf-8",
   "-deprecation",
@@ -10,8 +10,8 @@ scalacOptions ++= Seq(
   "-unchecked",
   "-explaintypes",
   "-language:higherKinds",
-  "-Xfatal-warnings",
-  "-Ywarn-dead-code",
+  "-Wdead-code",
+  "-Werror",
 )
 
 libraryDependencies ++= Seq(
