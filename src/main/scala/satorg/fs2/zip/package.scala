@@ -21,12 +21,12 @@ package object zip {
       config: ZipConfig
   ): ZipPipe[F] = { entries =>
     io.readOutputStream[F](blocker, config.chunkSize) {
-      mkJZipOutputStreamResource(blocker, config)(_).use { output =>
-        val writeOutput = io.writeOutputStream[F](F.pure(output), blocker, closeAfterUse = false)
+      mkJZipOutputStreamResource(blocker, config)(_).use { zipOut =>
+        val writeOutput = io.writeOutputStream[F](F.pure(zipOut), blocker, closeAfterUse = false)
 
         entries
           .evalMap { entry =>
-            blocker.delay { output.putNextEntry(entry.toJava) } >>
+            blocker.delay { zipOut.putNextEntry(entry.toJava) } >>
               entry.body.through(writeOutput).compile.drain
           }
           .compile
@@ -41,24 +41,28 @@ package object zip {
       config: ZipConfig
   ): UnzipPipe[F] = { zipped =>
     Stream
-      .resourceWeak(
-        io.toInputStreamResource[F](zipped).flatMap { mkJZipInputStreamResource[F](blocker, config) }
+      .resource(
+        io.toInputStreamResource[F](zipped)
+          .flatMap { mkJZipInputStreamResource[F](blocker, config) }
       )
-      .flatMap { input =>
+      .flatMap { zipIn =>
         def emitNextEntry: ZipEntryStream[F] = Stream.force {
-          blocker.delay { input.getNextEntry } >>= {
-            case null => F.pure(Stream.empty.covaryAll[F, ZipEntry[F]])
-            case jEntry =>
-              Deferred[F, ExitCase[Throwable]]
-                .map { deferred =>
+          blocker
+            .delay { zipIn.getNextEntry }
+            .flatMap {
+              case null =>
+                Stream.empty.covaryAll[F, ZipEntry[F]].pure[F]
+              case jEntry =>
+                Deferred[F, Unit].map { deferred =>
                   val body =
-                    io.readInputStream[F](F.pure(input), config.chunkSize, blocker, closeAfterUse = false)
-                      .onFinalizeCase { deferred.complete }
+                    io.readInputStream[F](F.pure(zipIn), config.chunkSize, blocker, closeAfterUse = false)
+                      .onFinalize(deferred.complete(()))
+
                   val entry = ZipEntry.fromJavaAndBody(jEntry, body)
 
                   Stream.emit(entry) ++ Stream.eval_(deferred.get) ++ emitNextEntry
                 }
-          }
+            }
         }
 
         emitNextEntry
@@ -70,9 +74,9 @@ package object zip {
       config: ZipConfig
   )(input: InputStream)(implicit F: Sync[F]) = {
 
-    Resource.fromAutoCloseableBlocking[F, JZip.ZipInputStream](blocker)(
-      F.delay { new JZip.ZipInputStream(input, config.charset) }
-    )
+    Resource.fromAutoCloseableBlocking[F, JZip.ZipInputStream](blocker)(F.delay {
+      new JZip.ZipInputStream(input, config.charset)
+    })
   }
 
   private[this] def mkJZipOutputStreamResource[F[_]: ContextShift](

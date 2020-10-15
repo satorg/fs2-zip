@@ -118,8 +118,8 @@ class ZipUnzipTest extends Specification with ScalaCheck {
 }
 
 object ZipUnzipTest {
-  private def acquireResourceInputStream(name: String, blocker: Blocker)(implicit
-      cs: ContextShift[IO]
+  private def acquireResourceInputStream(name: String, blocker: Blocker)(
+      implicit cs: ContextShift[IO]
   ): IO[InputStream] = {
 
     blocker
