@@ -3,5 +3,5 @@ object Versions {
   final val `Scala_2.13` = "2.13.6"
 
   final val fs2 = "2.5.6"
-  final val specs2 = "4.11.0"
+  final val specs2 = "4.12.0"
 }
