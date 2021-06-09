@@ -25,7 +25,8 @@ scalacOptions ++= Seq(
     case (2, minor) if minor >= 13 =>
       Seq(
         "-Wdead-code",
-        "-Werror"
+        "-Werror",
+        "-Wunused"
       )
   }.toList.flatten
 
