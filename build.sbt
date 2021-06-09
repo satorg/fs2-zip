@@ -1,5 +1,10 @@
 name := "fs2-zip"
 organization := "satorg"
+organizationName := "Sergey Torgashov"
+
+homepage := Some(url("https://github.com/satorg/fs2-zip"))
+licenses := List(("MIT", url("http://opensource.org/licenses/MIT")))
+startYear := Some(2020)
 
 scalaVersion := Versions.`Scala_2.13`
 crossScalaVersions := Seq(Versions.`Scala_2.12`, Versions.`Scala_2.13`)
