@@ -72,20 +72,16 @@ package object zip {
   private[this] def mkJZipInputStreamResource[F[_]: ContextShift](
       blocker: Blocker,
       config: ZipConfig
-  )(input: InputStream)(implicit F: Sync[F]) = {
-
+  )(input: InputStream)(implicit F: Sync[F]) =
     Resource.fromAutoCloseableBlocking[F, JZip.ZipInputStream](blocker)(F.delay {
       new JZip.ZipInputStream(input, config.charset)
     })
-  }
 
   private[this] def mkJZipOutputStreamResource[F[_]: ContextShift](
       blocker: Blocker,
       config: ZipConfig
-  )(output: OutputStream)(implicit F: Sync[F]) = {
-
+  )(output: OutputStream)(implicit F: Sync[F]) =
     Resource.fromAutoCloseableBlocking(blocker)(F.delay {
       new JZip.ZipOutputStream(output, config.charset)
     })
-  }
 }

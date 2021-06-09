@@ -120,10 +120,8 @@ class ZipUnzipTest extends Specification with ScalaCheck {
 object ZipUnzipTest {
   private def acquireResourceInputStream(name: String, blocker: Blocker)(
       implicit cs: ContextShift[IO]
-  ): IO[InputStream] = {
-
+  ): IO[InputStream] =
     blocker
       .delay[IO, InputStream] { getClass.getResourceAsStream(name) }
       .ensure(throw new RuntimeException(s"cannot load '$name'"))(_ != null)
-  }
 }
