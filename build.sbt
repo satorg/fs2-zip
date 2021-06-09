@@ -1,6 +1,5 @@
 name := "fs2-zip"
 organization := "satorg"
-version := "0.1-SNAPSHOT"
 
 scalaVersion := Versions.`Scala_2.13`
 crossScalaVersions := Seq(Versions.`Scala_2.12`, Versions.`Scala_2.13`)
