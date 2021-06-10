@@ -1,0 +1,32 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Check, compile and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup JVM and SBT
+        uses: olafurpg/setup-scala@v12
+        with: { java-version: 'adopt@1.11' }
+      - name: Cache SBT
+        uses: coursier/cache-action@v6
+      - name: Cleanup project
+        run: sbt --client -v +clean
+      - name: Check headers and formatting
+        run: sbt --client 'headerCheckAll;scalafmtCheckAll;scalafmtSbtCheck'
+      - name: Compile project
+        run: sbt --client '+compile;+Test/compile'
+      - name: Run tests
+        run: sbt --client +test
+      - name: Shutdown SBT server
+        run: sbt --client shutdown
