@@ -22,6 +22,7 @@
 package satorg.fs2.zip
 
 import cats.effect._
+import cats.effect.testing.specs2.{CatsIO, CatsResourceIO}
 import cats.syntax.all._
 import fs2._
 import org.scalacheck._
@@ -30,18 +31,11 @@ import org.specs2.mutable.Specification
 import scodec.bits.ByteVector
 
 import java.io.InputStream
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
 
-class ZipUnzipTest extends Specification with ScalaCheck {
-
+class ZipUnzipTest extends Specification with CatsIO with CatsResourceIO[Blocker] with ScalaCheck {
   import ZipUnzipTest._
 
-  private val timeout: FiniteDuration = 10.seconds
-  private val testBlocker: Blocker =
-    Blocker.liftExecutionContext(ExecutionContext.global)
-  private implicit val testCS: ContextShift[IO] =
-    IO.contextShift(ExecutionContext.global)
+  override def resource: Resource[IO, Blocker] = Blocker[IO]
 
   "unzipPipe" should {
     val expectedResults =
@@ -54,52 +48,54 @@ class ZipUnzipTest extends Specification with ScalaCheck {
         "dir1/dir2/file4.txt" -> "db8bfc02dd287a86eb18cdfcab96c6ac"
       )
 
-    "unzip files and directories from a test zip archive" in {
-      io.readInputStream(
-        acquireResourceInputStream("/test.zip", testBlocker),
-        256,
-        testBlocker
-      ).through(unzipPipe(testBlocker))
-        .flatMap { entry =>
-          entry.body
-            .through(hash.md5)
-            .foldMap(b => f"$b%02x")
-            .map(entry.path -> _)
+    "unzip files and directories from a test zip archive" >> withResource { (blocker: Blocker) =>
+      classpathResourceInputStreamResource("/test.zip", blocker)
+        .map(IO.pure)
+        .use {
+          io.readInputStream(_, 256, blocker)
+            .through(unzipPipe(blocker))
+            .flatMap { entry =>
+              entry.body
+                .through(hash.md5)
+                .foldMap(b => f"$b%02x")
+                .map(entry.path -> _)
+            }
+            .compile
+            .toList
         }
-        .compile
-        .toList
-        .unsafeRunSync() must
-        containTheSameElementsAs(expectedResults)
+        .flatMap { results =>
+          IO { results must containTheSameElementsAs(expectedResults) }
+        }
     }
-    "allow processing unzipped entries in parallel" in {
-      io.readInputStream(
-        acquireResourceInputStream("/test.zip", testBlocker),
-        256,
-        testBlocker
-      ).through(unzipPipe(testBlocker))
-        .map { entry =>
-          entry.body
-            .through(hash.md5)
-            .foldMap(b => f"$b%02x")
-            .map(entry.path -> _)
+    "allow processing unzipped entries in parallel" >> withResource { (blocker: Blocker) =>
+      classpathResourceInputStreamResource("/test.zip", blocker)
+        .map(IO.pure)
+        .use {
+          io.readInputStream(_, 256, blocker)
+            .through(unzipPipe(blocker))
+            .map { entry =>
+              entry.body
+                .through(hash.md5)
+                .foldMap(b => f"$b%02x")
+                .map(entry.path -> _)
+            }
+            .parJoinUnbounded
+            .compile
+            .toList
         }
-        .parJoinUnbounded
-        .compile
-        .toList
-        .unsafeRunSync() must
-        containTheSameElementsAs(expectedResults)
+        .flatMap { results =>
+          IO { results must containTheSameElementsAs(expectedResults) }
+        }
     }
   }
   "zipPipe and unzipPipe" should {
-    "compress and decompress streams correctly" in {
+    "compress and decompress streams correctly" >> withResource { (blocker: Blocker) =>
       implicit val arbInputEntries: Arbitrary[Map[String, ByteVector]] =
         Arbitrary {
           Gen.mapOf {
             val entryPathGen =
               Gen
-                .listOf(
-                  Gen.frequency(9 -> Gen.alphaNumChar, 1 -> Gen.const('/'))
-                )
+                .listOf(Gen.frequency(9 -> Gen.alphaNumChar, 1 -> Gen.const('/')))
                 .map(_.mkString)
 
             val entryBodyGen =
@@ -131,7 +127,7 @@ class ZipUnzipTest extends Specification with ScalaCheck {
             )
           }
           // compress to byte stream
-          .through(zipPipe(testBlocker))
+          .through(zipPipe(blocker))
           // convert to a single item chunk of bytes
           .chunks
           .fold(Chunk.Queue.empty[Byte])(_ :+ _)
@@ -140,7 +136,7 @@ class ZipUnzipTest extends Specification with ScalaCheck {
           .flatMap(Stream.chunk)
           .rechunkRandomly()
           // decompress from byte stream
-          .through(unzipPipe(testBlocker))
+          .through(unzipPipe(blocker))
           // extract each entry into a separate `ByteVector`
           .evalMap { unzippedEntry =>
             unzippedEntry.body.compile.to(ByteVector).map {
@@ -150,18 +146,20 @@ class ZipUnzipTest extends Specification with ScalaCheck {
           // prepare and run the stream
           .compile
           .toVector
-          .unsafeRunTimed(timeout) must beSome(===(sourceEntries))
+          .flatMap { results =>
+            IO { results must_=== sourceEntries }
+          }
       }
     }
   }
 }
 
 object ZipUnzipTest {
-  private def acquireResourceInputStream(
+  private def classpathResourceInputStreamResource(
       name: String,
       blocker: Blocker
-  )(implicit cs: ContextShift[IO]): IO[InputStream] =
-    blocker
-      .delay[IO, InputStream] { getClass.getResourceAsStream(name) }
+  )(implicit cs: ContextShift[IO]): Resource[IO, InputStream] =
+    Resource
+      .fromAutoCloseableBlocking(blocker)(IO { getClass.getResourceAsStream(name) })
       .ensure(throw new RuntimeException(s"cannot load '$name'"))(_ != null)
 }
