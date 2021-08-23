@@ -21,13 +21,13 @@
 
 package satorg.fs2
 
-import java.io.{InputStream, OutputStream}
-import java.util.{zip => JZip}
-
 import cats.effect._
 import cats.effect.concurrent.Deferred
 import cats.syntax.all._
 import fs2._
+
+import java.io.{InputStream, OutputStream}
+import java.util.{zip => JZip}
 
 package object zip {
 
