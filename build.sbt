@@ -37,7 +37,8 @@ scalacOptions ++= Seq(
 libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % Versions.fs2,
   "co.fs2" %% "fs2-io" % Versions.fs2,
-  "org.specs2" %% "specs2-core" % Versions.specs2 % Test,
-  "org.specs2" %% "specs2-scalacheck" % Versions.specs2 % Test,
-  "com.codecommit" %% "cats-effect-testing-specs2" % Versions.catsEffectTesting % Test
+  "org.scalameta" %% "munit" % Versions.munit % Test,
+  "org.scalameta" %% "munit-scalacheck" % Versions.munit % Test,
+  "org.typelevel" %% "munit-cats-effect-2" % Versions.munitCatsEffect % Test,
+  "org.typelevel" %% "scalacheck-effect-munit" % Versions.scalacheckEffectMunit % Test
 )
