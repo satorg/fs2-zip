@@ -6,8 +6,8 @@ homepage := Some(url("https://github.com/satorg/fs2-zip"))
 licenses := List(("MIT", url("http://opensource.org/licenses/MIT")))
 startYear := Some(2020)
 
-scalaVersion := Versions.`Scala_2.13`
-crossScalaVersions := Seq(Versions.`Scala_2.12`, Versions.`Scala_2.13`)
+scalaVersion := Versions.Scala2_13
+crossScalaVersions := Seq(Versions.Scala2_12, Versions.Scala2_13)
 
 scalacOptions ++= Seq(
   "-encoding",
@@ -35,10 +35,10 @@ scalacOptions ++= Seq(
   }.toList.flatten
 
 libraryDependencies ++= Seq(
-  "co.fs2" %% "fs2-core" % Versions.fs2,
-  "co.fs2" %% "fs2-io" % Versions.fs2,
-  "org.scalameta" %% "munit" % Versions.munit % Test,
-  "org.scalameta" %% "munit-scalacheck" % Versions.munit % Test,
-  "org.typelevel" %% "munit-cats-effect-2" % Versions.munitCatsEffect % Test,
-  "org.typelevel" %% "scalacheck-effect-munit" % Versions.scalacheckEffectMunit % Test
+  "co.fs2" %% "fs2-core" % Versions.Fs2,
+  "co.fs2" %% "fs2-io" % Versions.Fs2,
+  "org.scalameta" %% "munit" % Versions.MUnit % Test,
+  "org.scalameta" %% "munit-scalacheck" % Versions.MUnit % Test,
+  "org.typelevel" %% "munit-cats-effect-2" % Versions.MUnitCatsEffect % Test,
+  "org.typelevel" %% "scalacheck-effect-munit" % Versions.ScalacheckEffect % Test
 )
