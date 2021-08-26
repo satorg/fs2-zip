@@ -28,12 +28,9 @@ import org.scalacheck._
 import org.scalacheck.effect.PropF
 import scodec.bits.ByteVector
 
-class ZipUnzipSuite extends CatsEffectSuite with ScalaCheckEffectSuite {
+class ZipUnzipSuite extends CatsEffectSuite with ScalaCheckEffectSuite with BlockerFixture {
 
-  private val blockerSuiteFixture = ResourceSuiteLocalFixture("blocker", Blocker[IO])
-  override def munitFixtures: Seq[Fixture[_]] = blockerSuiteFixture +: super.munitFixtures
-
-  private val blockerFixture = ResourceFixture(Resource.eval(IO { blockerSuiteFixture() }))
+  private val blockerFixture = ResourceFixture(blockerResource)
 
   blockerFixture.test("zipPipe and unzipPipe should compress and decompress streams correctly") { blocker =>
     val gen =

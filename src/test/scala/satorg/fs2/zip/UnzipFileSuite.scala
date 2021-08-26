@@ -26,15 +26,10 @@ import cats.syntax.all._
 import fs2._
 import munit.CatsEffectSuite
 
-class UnzipFileSuite extends CatsEffectSuite {
+class UnzipFileSuite extends CatsEffectSuite with BlockerFixture {
   import UnzipFileSuite._
 
-  private val blockerSuiteFixture = ResourceSuiteLocalFixture("blocker", Blocker[IO])
-  override def munitFixtures: Seq[Fixture[_]] = blockerSuiteFixture +: super.munitFixtures
-
-  private val inputFixture =
-    ResourceFixture(Resource.eval(IO { blockerSuiteFixture() })
-      .flatMap(InputFixture.resource))
+  private val inputFixture = ResourceFixture(blockerResource.flatMap(InputFixture.resource))
 
   private val expectedResults =
     Vector(
