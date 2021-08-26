@@ -47,7 +47,9 @@ class UnzipFileSuite extends CatsEffectSuite with BlockerFixture {
       .foldMap(b => f"$b%02x")
       .map(entry.path -> _)
 
-  inputFixture.test("unzipPipe: should unzip files and directories from a test zip archive") { fixture =>
+  inputFixture.test(
+    "unzipPipe: should unzip files and directories from a test zip archive"
+  ) { fixture =>
     fixture.input
       .through(unzipPipe(fixture.blocker))
       .flatMap(decodeEntry)
@@ -56,7 +58,9 @@ class UnzipFileSuite extends CatsEffectSuite with BlockerFixture {
       .map { _.sorted }
       .assertEquals(expectedResults)
   }
-  inputFixture.test("unzipPipe: should allow processing unzipped entries in parallel") { fixture =>
+  inputFixture.test(
+    "unzipPipe: should allow processing unzipped entries in parallel"
+  ) { fixture =>
     fixture.input
       .through(unzipPipe(fixture.blocker))
       .map(decodeEntry)

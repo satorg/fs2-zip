@@ -28,5 +28,6 @@ trait BlockerFixture extends Suite { _: CatsEffectFixtures =>
   private val blockerSuiteFixture = ResourceSuiteLocalFixture("blocker", Blocker[IO])
   override def munitFixtures: Seq[Fixture[_]] = blockerSuiteFixture +: super.munitFixtures
 
-  protected final def blockerResource: Resource[IO, Blocker] = Resource.eval(IO { blockerSuiteFixture() })
+  protected final def blockerResource: Resource[IO, Blocker] =
+    Resource.eval(IO { blockerSuiteFixture() })
 }

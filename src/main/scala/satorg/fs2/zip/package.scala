@@ -76,8 +76,12 @@ package object zip {
               case jEntry =>
                 Deferred[F, Unit].map { deferred =>
                   val body =
-                    io.readInputStream[F](F.pure(zipIn), config.chunkSize, blocker, closeAfterUse = false)
-                      .onFinalize(deferred.complete(()))
+                    io.readInputStream[F](
+                      F.pure(zipIn),
+                      config.chunkSize,
+                      blocker,
+                      closeAfterUse = false
+                    ).onFinalize(deferred.complete(()))
 
                   val entry = ZipEntry.fromJavaAndBody(jEntry, body)
 

@@ -32,7 +32,9 @@ class ZipUnzipSuite extends CatsEffectSuite with ScalaCheckEffectSuite with Bloc
 
   private val blockerFixture = ResourceFixture(blockerResource)
 
-  blockerFixture.test("zipPipe and unzipPipe should compress and decompress streams correctly") { blocker =>
+  blockerFixture.test(
+    "zipPipe and unzipPipe should compress and decompress streams correctly"
+  ) { blocker =>
     val gen =
       Gen.mapOf {
         val entryPathGen =
