@@ -1,15 +1,14 @@
 name := "fs2-zip"
-organization := "satorg"
-organizationName := "Sergey Torgashov"
+ThisBuild / organization := "satorg"
+ThisBuild / organizationName := "Sergey Torgashov"
 
-homepage := Some(url("https://github.com/satorg/fs2-zip"))
-licenses := List(("MIT", url("http://opensource.org/licenses/MIT")))
-startYear := Some(2020)
+ThisBuild / homepage := Some(url("https://github.com/satorg/fs2-zip"))
+ThisBuild / licenses := List(("MIT", url("http://opensource.org/licenses/MIT")))
+ThisBuild / startYear := Some(2020)
 
-scalaVersion := Versions.Scala2_13
-crossScalaVersions := Seq(Versions.Scala2_12, Versions.Scala2_13)
-
-scalacOptions ++= Seq(
+ThisBuild / crossScalaVersions := Seq(Versions.Scala2_12, Versions.Scala2_13)
+ThisBuild / scalaVersion := Versions.Scala2_13
+ThisBuild / scalacOptions ++= Seq(
   "-encoding",
   "utf-8",
   "-deprecation",
@@ -34,7 +33,7 @@ scalacOptions ++= Seq(
       )
   }.toList.flatten
 
-libraryDependencies ++= Seq(
+ThisBuild / libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % Versions.Fs2,
   "co.fs2" %% "fs2-io" % Versions.Fs2,
   "org.scalameta" %% "munit" % Versions.MUnit % Test,
@@ -42,3 +41,5 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "munit-cats-effect-2" % Versions.MUnitCatsEffect % Test,
   "org.typelevel" %% "scalacheck-effect-munit" % Versions.ScalacheckEffect % Test
 )
+
+ThisBuild / githubWorkflowPublishTargetBranches := Nil
