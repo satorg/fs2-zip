@@ -21,11 +21,25 @@
 
 package satorg.fs2.zip
 
-import java.util.{zip => jzip}
+import java.util.zip.{ZipEntry => JZipEntry}
 
+/** Defines a compression method.
+  */
 sealed abstract class ZipMethod(private[zip] val value: Int)
 
 object ZipMethod {
-  case object Stored extends ZipMethod(jzip.ZipEntry.STORED)
-  case object Deflated extends ZipMethod(jzip.ZipEntry.DEFLATED)
+
+  /** Compression method for uncompressed data.
+    *
+    * @see
+    *   [[java.util.zip.ZipEntry.STORED]]
+    */
+  case object Stored extends ZipMethod(JZipEntry.STORED)
+
+  /** Compression method for compressed data.
+    *
+    * @see
+    *   [[java.util.zip.ZipEntry.DEFLATED]]
+    */
+  case object Deflated extends ZipMethod(JZipEntry.DEFLATED)
 }
