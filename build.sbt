@@ -44,8 +44,8 @@ ThisBuild / libraryDependencies ++= Seq(
 
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
 ThisBuild / githubWorkflowBuildPreamble +=
-  WorkflowStep.Sbt("preprCheckAll" :: Nil, name = Some("Check that code is formatted"))
+  WorkflowStep.Sbt("preprCheck" :: Nil, name = Some("Check that code is formatted"))
 
 inThisBuild(Nil ++
-  addCommandAlias("preprAll", "headerCreateAll; scalafmtAll; scalafmtSbt") ++
-  addCommandAlias("preprCheckAll", "headerCheckAll; scalafmtCheckAll; scalafmtSbtCheck"))
+  addCommandAlias("prepr", "headerCreateAll; scalafmtAll; scalafmtSbt") ++
+  addCommandAlias("preprCheck", "headerCheckAll; scalafmtCheckAll; scalafmtSbtCheck"))
